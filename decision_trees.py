@@ -3,6 +3,7 @@
 from collections import Counter
 import math
 import pandas as pd
+import pprint
 
 """
 - Para fines de que yo lo probara y puediera exportar esto sin necesidad de compartir un .csv
@@ -135,6 +136,7 @@ def entropia(conteo, categoria):
 #print(prueba[list(prueba.keys())[0]]["Yes"])
 #print(prueba.items())
 
+"""
 def entropia_columna(values, columna):
     entropia_total = 0
     cantidad_datos = len(dataset)
@@ -142,6 +144,25 @@ def entropia_columna(values, columna):
     while i < len(values[columna]):
         llave = list(values[columna].keys())[i]
         entropy = (entropia(contar_play(dataset, columna), i) * (-1))
+        entropia_total += entropy * (values[columna][llave] / cantidad_datos)
+
+        i += 1
+
+    return entropia_total
+"""
+def entropia_columna(data, columna):
+
+    values = valores(data)
+    entropia_total = 0
+    cantidad_datos = len(data)
+    i = 0
+
+    while i < len(values[columna]):
+
+        llave = list(values[columna].keys())[i]
+
+        entropy = entropia(contar_play(data, columna), i) * (-1)
+
         entropia_total += entropy * (values[columna][llave] / cantidad_datos)
 
         i += 1
@@ -169,7 +190,7 @@ def information_gain(data, columna):
     # Esto es solo para no tener que llamar repetidaente a valores()
     values = valores(data)
     general_entropy = (entropia_general(values) * (-1))
-    column_entropy = entropia_columna(values, columna)
+    column_entropy = entropia_columna(data, columna)
     info_gain = general_entropy - column_entropy
 
     return info_gain
@@ -289,16 +310,6 @@ def clase_mayoritaria(conjunto):
 
     return clases.most_common(1)[0][0]
 
-"""
-def construir_arbol(data, descartadas):
-    values = valores(data)
-    llaves_resultados = list(values[len(values)- 1].keys())
-    print(llaves_resultados)
-    resultados = values[len(values)- 1]
-    print(values[len(values)- 1])
-    print(resultados["Yes"])
-    return 0
-"""
 
 """
 def construir_arbol(data, descartadas):
@@ -365,17 +376,18 @@ def construir_arbol(data, descartadas):
 
     return arbol
 
-print(construir_arbol(dataset, []))
+pprint.pprint(construir_arbol(dataset, []))
+
 
 a = {'Outlook':
         {'Sunny':
             {'Humidity': {'High': 'No', 'Normal': 'Yes'}},
-        'Overcast': 'Yes',
-        'Rain':
+    'Overcast': 'Yes',
+    'Rain':
             {'Humidity':
                 {'High':
                     {'Wind':
                         {'Weak': 'Yes', 'Strong': 'No'}},
-                    'Normal':
-                        {'Wind':
-                            {'Weak': 'Yes', 'Strong': 'No'}}}}}}
+                'Normal':
+                    {'Wind':
+                        {'Weak': 'Yes', 'Strong': 'No'}}}}}}
