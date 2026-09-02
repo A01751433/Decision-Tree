@@ -2,6 +2,7 @@
 
 from collections import Counter
 import math
+import pandas as pd
 
 """
 - Para fines de que yo lo probara y puediera exportar esto sin necesidad de compartir un .csv
@@ -10,25 +11,13 @@ import math
 - Mientras estaba escribiendo esto me di cuenta de que el nombre de un par de variables y la implementación de
   algunas funciones dependen de mi dataset específico, en caso de ser necesario las puedo cambiar luego.
 """
-
+df = pd.read_csv("Data/Tree_data.csv")
+dataset = df.values.tolist()
+#print(dataset)
 # Las columnas son Outlook, Temperature, Humidity, Wind, Play
 titulo_columnas = ["Outlook", "Temperature", "Humidity", "Wind", "Play"]
-dataset = [
-    ["Sunny", "Hot", "High", "Weak", "No"],
-    ["Sunny", "Hot", "High", "Strong", "No"],
-    ["Overcast", "Hot", "High", "Weak", "Yes"],
-    ["Rain", "Mild", "High", "Weak", "Yes"],
-    ["Rain", "Cold", "Normal", "Weak", "Yes"],
-    ["Rain", "Cold", "Normal", "Strong", "No"],
-    ["Overcast", "Cold", "Normal", "Strong", "Yes"],
-    ["Sunny", "Mild", "High", "Weak", "No"],
-    ["Sunny", "Cold", "Normal", "Weak", "Yes"],
-    ["Rain", "Mild", "Normal", "Weak", "Yes"],
-    ["Sunny", "Mild", "Normal", "Strong", "Yes"],
-    ["Overcast", "Mild", "High", "Strong", "Yes"],
-    ["Overcast", "Hot", "Normal", "Weak", "Yes"],
-    ["Rain", "Mild", "High", "Strong", "No"]
-]
+
+
 
 # Primero voy a hacer una función que cuente la cantidad de valores diferentes en cada columna
 def valores(data):
@@ -106,6 +95,7 @@ para una de las categoría de ese objeto, cuál se especifica indicando el índi
 Nota: no sé muy bien porqué hay una entropía que tiene que ser positiva, decidí que esta función se queda así (creo que siempre da valores negativos)
 y en caso de ser necesario haré el valor en un positivo donde se ocupe.
 """
+"""
 def entropia(conteo, categoria):
 
     llave = list(conteo.keys())[categoria]
@@ -118,6 +108,26 @@ def entropia(conteo, categoria):
     entropy = (yes/(yes + no)) * math.log(yes/(yes + no), 2) + (no/(yes + no)) * math.log(no/(yes + no), 2)
 
     return entropy
+"""
+def entropia(conteo, categoria):
+
+    llave = list(conteo.keys())[categoria]
+
+    cantidades = conteo[llave].values()
+    total = sum(cantidades)
+
+    entropy = 0
+
+    for cantidad in cantidades:
+
+        if cantidad == 0:
+            continue
+
+        probabilidad = cantidad / total
+        entropy += probabilidad * math.log(probabilidad, 2)
+
+    return entropy
+
 
 #prueba = contar_play(dataset, 0)
 #print(entropia(prueba, 0))
