@@ -12,10 +12,11 @@ import pandas as pd
   algunas funciones dependen de mi dataset específico, en caso de ser necesario las puedo cambiar luego.
 """
 df = pd.read_csv("Data/Tree_data.csv")
+#df = pd.read_csv("Data/dataset_compra_coche.csv")
+titulo_columnas = df.columns.tolist()
 dataset = df.values.tolist()
 #print(dataset)
 # Las columnas son Outlook, Temperature, Humidity, Wind, Play
-titulo_columnas = ["Outlook", "Temperature", "Humidity", "Wind", "Play"]
 
 
 
@@ -180,7 +181,7 @@ def information_gain(data, columna):
 #print(entropia(contar_play(dataset, len(titulo_columnas)-1), 0))
 #print(entropia(contar_play(dataset, 2), 0))
 
-
+"""
 def info_gain_list(data, descartadas):
 
     big_gains = 0
@@ -198,6 +199,26 @@ def info_gain_list(data, descartadas):
             i += 1
 
     return columna_ganadora
+"""
+
+def info_gain_list(data, descartadas):
+
+    big_gains = -1
+    columna_ganadora = None
+    i = 0
+
+    while i < len(titulo_columnas) - 1:
+
+        if i not in descartadas:
+            gain_columna = information_gain(data, i)
+
+            if gain_columna > big_gains:
+                big_gains = gain_columna
+                columna_ganadora = i
+
+        i += 1
+
+    return columna_ganadora
 
 #print(info_gain_list(dataset, [0]))
 
@@ -213,6 +234,7 @@ def dividir_dataset(data, columna, valor):
 
 #print(dividir_dataset(dataset, 0, "Sunny"))
 
+"""
 def es_puro(conjunto):
     yes = 0
     no = 0
@@ -227,7 +249,21 @@ def es_puro(conjunto):
         return True
     else:
         return False
+"""
 
+def es_puro(conjunto):
+
+    clases = set()
+
+    for fila in conjunto:
+        clases.add(fila[-1])
+
+    if len(clases) <= 1:
+        return True
+    else:
+        return False
+
+"""
 def clase_mayoritaria(conjunto):
     yes = 0
     no = 0
@@ -243,6 +279,17 @@ def clase_mayoritaria(conjunto):
     else:
         return "No"
 """
+
+def clase_mayoritaria(conjunto):
+
+    clases = Counter()
+
+    for fila in conjunto:
+        clases[fila[-1]] += 1
+
+    return clases.most_common(1)[0][0]
+
+"""
 def construir_arbol(data, descartadas):
     values = valores(data)
     llaves_resultados = list(values[len(values)- 1].keys())
@@ -253,6 +300,7 @@ def construir_arbol(data, descartadas):
     return 0
 """
 
+"""
 def construir_arbol(data, descartadas):
 
     # Si todos pertenecen a la misma clase, hemos llegado a una hoja
@@ -281,7 +329,41 @@ def construir_arbol(data, descartadas):
         )
 
     return arbol
+"""
 
+def construir_arbol(data, descartadas):
+
+    # Si todos pertenecen a la misma clase, hemos llegado a una hoja
+    if es_puro(data):
+        return clase_mayoritaria(data)
+
+    # Buscar la mejor columna disponible
+    columna = info_gain_list(data, descartadas)
+
+    # Si ya no existen columnas disponibles,
+    # regresar la clase más común
+    if columna is None:
+        return clase_mayoritaria(data)
+
+    # Crear el nodo
+    arbol = {
+        titulo_columnas[columna]: {}
+    }
+
+    # Obtener los valores posibles de esa columna
+    valores_columna = valores(data)[columna].keys()
+
+    # Crear una rama para cada valor
+    for valor in valores_columna:
+
+        subconjunto = dividir_dataset(data, columna, valor)
+
+        arbol[titulo_columnas[columna]][valor] = construir_arbol(
+            subconjunto,
+            descartadas + [columna]
+        )
+
+    return arbol
 
 print(construir_arbol(dataset, []))
 
