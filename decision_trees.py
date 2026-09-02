@@ -35,12 +35,13 @@ def valores(data):
     # No sé qué tan inneficiente sea esto, pero la forma más sencilla es hacer comprensión de listas y contar los resultados ahí
     i = 0
     contadores = []
-    while i < len(titulo_columnas):
+    while i < len(data[0]):
         columna = [fila[i] for fila in data]
         conteo = Counter(columna)
         contadores.append(conteo)
         i += 1
     return contadores
+
 
 #prueba = valores(dataset)
 #print(prueba)
@@ -63,7 +64,7 @@ values = valores(dataset)
 for i in values[len(dataset[0]) - 1].keys():
     y_keys.setdefault(i, 0)
 
-def contar_play(dataset, columna):
+"""def contar_play(dataset, columna):
     conteo = {}
 
     for fila in dataset:
@@ -75,6 +76,23 @@ def contar_play(dataset, columna):
             conteo[valor] = Counter(y_keys)
 
         conteo[valor][play] += 1
+
+    return conteo
+    """
+
+def contar_play(data, columna):
+
+    conteo = {}
+
+    for fila in data:
+
+        valor = fila[columna]
+        clase = fila[-1]
+
+        if valor not in conteo:
+            conteo[valor] = Counter()
+
+        conteo[valor][clase] += 1
 
     return conteo
 
