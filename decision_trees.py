@@ -6,6 +6,10 @@ import pandas as pd
 import pprint
 import random
 
+# Estas dos solo fueron importadas para la visualización de la matriz de confusión
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score, classification_report
+import matplotlib.pyplot as plt
+
 """
 - Para fines de que yo lo probara y puediera exportar esto sin necesidad de compartir un .csv
   decidí incluir los datos de entrada directamente en el código.
@@ -395,18 +399,125 @@ def construir_arbol(data, descartadas):
 
     return arbol
 
-pprint.pprint(construir_arbol(dataset, []))
-
+#pprint.pprint(construir_arbol(dataset, []))
+"""
 def predecir(arbol, dato):
     while isinstance(arbol, dict):
         columna = list(arbol.keys())[0]
         indice = titulo_columnas.index(columna)
         valor = dato[indice]
+
+        print("Columna:", columna)
+        print("Valor:", valor)
+        print("Ramas disponibles:", arbol[columna].keys())
+
         arbol = arbol[columna][valor]
     return arbol
+"""
+def predecir(arbol, dato, data):
+
+    while isinstance(arbol, dict):
+
+        columna = list(arbol.keys())[0]
+        indice = titulo_columnas.index(columna)
+        valor = dato[indice]
+
+        # Si el valor no existe en el árbol
+        if valor not in arbol[columna]:
+            return clase_mayoritaria(data)
+
+        arbol = arbol[columna][valor]
+
+    return arbol
+
+#arbol = construir_arbol(dataset, [])
+#nuevo_dato = ["Sunny", "Hot", "High", "Weak"]
+#nuevo_dato = ["vhigh", "vhigh", "2", "2", "small", "low"]
+
+#print(predecir(arbol, nuevo_dato))
+"""
+def evaluar_arbol(arbol, datos_prueba):
+    predicciones = []
+    reales = []
+
+    for fila in datos_prueba:
+        datos = fila[:-1]      # Todas las columnas excepto la clase
+        clase_real = fila[-1]  # Última columna
+
+        prediccion = predecir(arbol, datos)
+
+        predicciones.append(prediccion)
+        reales.append(clase_real)
+
+        # Las devuelve en 2 listas diferentes, una con las predicciones y otra con los valores reales
+        # literal las copio y pego para los dos lados de la matriz de confusión
+    return predicciones, reales
+"""
+
+def evaluar_arbol(arbol, datos_prueba):
+
+    predicciones = []
+    reales = []
+
+    for datos in datos_prueba:
+        prediccion = predecir(arbol, datos, dataset)
+        predicciones.append(prediccion)
+        reales.append(datos[-1])
+
+    return predicciones, reales
+
+#predicciones, reales = evaluar_arbol(arbol, datos_prueba)
+
+def matriz_confusion(reales, predicciones):
+    clases = sorted(set(reales) | set(predicciones))
+
+    matriz = {}
+
+    for real in clases:
+        matriz[real] = {}
+
+        for prediccion in clases:
+            matriz[real][prediccion] = 0
+
+    for real, prediccion in zip(reales, predicciones):
+        matriz[real][prediccion] += 1
+
+    return matriz
+
+#matriz = matriz_confusion(reales, predicciones)
+
 
 arbol = construir_arbol(dataset, [])
-#nuevo_dato = ["Sunny", "Hot", "High", "Weak"]
-nuevo_dato = ["vhigh", "vhigh", "2", "2", "small", "low"]
 
-print(predecir(arbol, nuevo_dato))
+predicciones, reales = evaluar_arbol(arbol, datos_prueba)
+
+#matriz = matriz_confusion(reales, predicciones)
+
+#pprint.pprint(matriz)
+
+""" De aquí en adelante son puras cosas para la matriz y datos del performance """
+
+# Obtener las clases presentes
+clases = sorted(set(reales) | set(predicciones))
+
+# Matriz de confusión
+matriz = confusion_matrix(reales, predicciones, labels=clases)
+
+# Mostrar matriz de confusión
+disp = ConfusionMatrixDisplay(
+    confusion_matrix=matriz,
+    display_labels=clases
+)
+
+disp.plot()
+plt.title("Matriz de confusión")
+plt.show()
+
+# Accuracy
+accuracy = accuracy_score(reales, predicciones)
+
+print("Accuracy:", accuracy)
+
+# Reporte de clasificación
+print("\nReporte de clasificación:")
+print(classification_report(reales, predicciones, labels=clases))
