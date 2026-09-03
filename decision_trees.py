@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 - A lo largo del código hay múltiples funciones que están totalmente comentadas, esto es porque primero hice mi implementación
   simple para el dataset de jugar tennis de la actividad 7 (Tree_data.csv) para entender el funcionamiento y luego tuve
   que cambiar la mayoría de las funciones para que fueran aplicables *cualquier* dataset.
-- Las restricciones actuales de mi modelo es que puede trabajar con cualquier dataset en donde todas las columnas
+- Las restricciones actuales de mi código es que puede trabajar con cualquier dataset en donde todas las columnas
   sean categóricas y la columna target (las "Y") sea la última columna del dataset. No hay restricción en el número de
   columnas ni en el número de valores únicos por columna/categoría.
 """
