@@ -12,7 +12,7 @@ import pprint
 - Mientras estaba escribiendo esto me di cuenta de que el nombre de un par de variables y la implementación de
   algunas funciones dependen de mi dataset específico, en caso de ser necesario las puedo cambiar luego.
 """
-df = pd.read_csv("Data/Tree_data.csv")
+df = pd.read_csv("Data/car_data.csv")
 #df = pd.read_csv("Data/dataset_compra_coche.csv")
 titulo_columnas = df.columns.tolist()
 dataset = df.values.tolist()
@@ -76,7 +76,6 @@ def contar_play(data, columna):
     conteo = {}
 
     for fila in data:
-
         valor = fila[columna]
         clase = fila[-1]
 
@@ -112,16 +111,12 @@ def entropia(conteo, categoria):
     return entropy
 """
 def entropia(conteo, categoria):
-
     llave = list(conteo.keys())[categoria]
-
     cantidades = conteo[llave].values()
     total = sum(cantidades)
-
     entropy = 0
 
     for cantidad in cantidades:
-
         if cantidad == 0:
             continue
 
@@ -158,13 +153,9 @@ def entropia_columna(data, columna):
     i = 0
 
     while i < len(values[columna]):
-
         llave = list(values[columna].keys())[i]
-
         entropy = entropia(contar_play(data, columna), i) * (-1)
-
         entropia_total += entropy * (values[columna][llave] / cantidad_datos)
-
         i += 1
 
     return entropia_total
@@ -398,5 +389,7 @@ def predecir(arbol, dato):
     return arbol
 
 arbol = construir_arbol(dataset, [])
-nuevo_dato = ["Sunny", "Hot", "High", "Weak"]
+#nuevo_dato = ["Sunny", "Hot", "High", "Weak"]
+nuevo_dato = ["vhigh", "vhigh", "2", "2", "small", "low"]
+
 print(predecir(arbol, nuevo_dato))
