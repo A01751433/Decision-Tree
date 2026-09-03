@@ -11,11 +11,21 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_s
 import matplotlib.pyplot as plt
 
 """
-- Para fines de que yo lo probara y puediera exportar esto sin necesidad de compartir un .csv
-  decidí incluir los datos de entrada directamente en el código.
-- Estos son los mismos datos que los de Tema 7 - Tree Exercise Empty
-- Mientras estaba escribiendo esto me di cuenta de que el nombre de un par de variables y la implementación de
-  algunas funciones dependen de mi dataset específico, en caso de ser necesario las puedo cambiar luego.
+- A lo largo del código hay múltiples funciones que están totalmente comentadas, esto es porque primero hice mi implementación
+  simple para el dataset de jugar tennis de la actividad 7 (Tree_data.csv) para entender el funcionamiento y luego tuve
+  que cambiar la mayoría de las funciones para que fueran aplicables *cualquier* dataset.
+- Las restricciones actuales de mi modelo es que puede trabajar con cualquier dataset en donde todas las columnas
+  sean categóricas y la columna target (las "Y") sea la última columna del dataset. No hay restricción en el número de
+  columnas ni en el número de valores únicos por columna/categoría.
+"""
+
+"""
+Este car_data.csv es con el que recomieno correr el código, lo obtuve de
+Bohanec, M. (1988). Car Evaluation [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5JP48.
+Consta de 1,728 registros y 6 atributos categóricos más la clase objetivo.
+Los otros datasets fueron principalmente para pruebas y entender el funcionamiento con árboles de tamañano pequeño
+porque dado que no hay un límite de tamaño mínimo de la hoja los árboles explotan en cantidad de nodos y ramas
+y se vuelve difíciles de entender en el formato de diccionario en la terminal.
 """
 df = pd.read_csv("Data/car_data.csv")
 #df = pd.read_csv("Data/dataset_compra_coche.csv")
@@ -92,6 +102,7 @@ for i in values[len(dataset[0]) - 1].keys():
     return conteo
     """
 
+# Sirve para contar cuántas veces aparece cada valor de una columna en combinación con cada clase de la variable objetivo
 def contar_play(data, columna):
 
     conteo = {}
@@ -112,10 +123,9 @@ def contar_play(data, columna):
 #print(prueba["Sunny"]["Yes"])  # 2
 
 """
-Es una función que calcula la entropía para una sola categoría. La función de contar_play regresa un counter, esta función calcula la entropía
-para una de las categoría de ese objeto, cuál se especifica indicando el índice de la categoría deseada.
-Nota: no sé muy bien porqué hay una entropía que tiene que ser positiva, decidí que esta función se queda así (creo que siempre da valores negativos)
-y en caso de ser necesario haré el valor en un positivo donde se ocupe.
+Esta función calcula la entropía de una categoría específica a partir de los conteos
+de las clases de la variable objetivo. Recibe el diccionario generado por contar_play
+y el índice de la categoría cuya entropía se desea calcular.
 """
 """
 def entropia(conteo, categoria):
@@ -153,6 +163,10 @@ def entropia(conteo, categoria):
 #print(prueba.items())
 
 """
+Calcula la entropía de una columna entera.
+"""
+
+"""
 def entropia_columna(values, columna):
     entropia_total = 0
     cantidad_datos = len(dataset)
@@ -182,6 +196,7 @@ def entropia_columna(data, columna):
     return entropia_total
 
 #print(entropia_columna(valores(dataset), 0))
+
 
 # Esto calcula la entropia de la columna "Y" porque resulta que mi función de entropía no lo puede calcular (siempre devuelve 0).
 # Podría modificar esta función para que recibiera el parámetro de colna y entonces reemplazara la función de entropia()
@@ -232,6 +247,11 @@ def information_gain(data, columna):
 #print(entropia(contar_play(dataset, len(titulo_columnas)-1), 0))
 #print(entropia(contar_play(dataset, 2), 0))
 
+
+"""
+Esta función calcula el Information Gain de las columnas que aún no han sido
+descartadas y selecciona la columna que obtiene el mayor valor de Information Gain.
+"""
 """
 def info_gain_list(data, descartadas):
 
@@ -251,7 +271,6 @@ def info_gain_list(data, descartadas):
 
     return columna_ganadora
 """
-
 def info_gain_list(data, descartadas):
 
     big_gains = -1
@@ -273,7 +292,11 @@ def info_gain_list(data, descartadas):
 
 #print(info_gain_list(dataset, [0]))
 
-
+"""
+Esta función divide el dataset tomando únicamente las filas que tienen
+un valor específico en una columna determinada. Regresa un subconjunto
+del dataset con las filas que cumplen esta condición.
+"""
 def dividir_dataset(data, columna, valor):
     subconjunto = []
     i = 0
@@ -285,6 +308,11 @@ def dividir_dataset(data, columna, valor):
 
 #print(dividir_dataset(dataset, 0, "Sunny"))
 
+
+"""
+Esta función determina si todas las filas de un conjunto pertenecen a la misma
+clase. Regresa True si el conjunto es puro y False si contiene más de una clase.
+"""
 """
 def es_puro(conjunto):
     yes = 0
@@ -315,6 +343,10 @@ def es_puro(conjunto):
         return False
 
 """
+Esta función determina cuál es la clase que aparece con mayor frecuencia
+en un conjunto de datos y regresa dicha clase.
+"""
+"""
 def clase_mayoritaria(conjunto):
     yes = 0
     no = 0
@@ -340,6 +372,13 @@ def clase_mayoritaria(conjunto):
 
     return clases.most_common(1)[0][0]
 
+
+"""
+Esta función construye recursivamente un árbol de decisión a partir de un
+conjunto de datos. Selecciona la columna con mayor Information Gain, divide
+el dataset según sus valores y continúa construyendo las ramas hasta llegar
+a una hoja o hasta que no queden columnas disponibles.
+"""
 
 """
 def construir_arbol(data, descartadas):
@@ -399,6 +438,12 @@ def construir_arbol(data, descartadas):
 
     return arbol
 
+
+"""
+Esta función utiliza un árbol de decisión para determinar la clase de un dato.
+Recorre el árbol según los valores del dato y regresa la clase correspondiente.
+Si el valor no existe en el árbol, utiliza la clase mayoritaria del conjunto de datos.
+"""
 #pprint.pprint(construir_arbol(dataset, []))
 """
 def predecir(arbol, dato):
@@ -435,6 +480,13 @@ def predecir(arbol, dato, data):
 #nuevo_dato = ["vhigh", "vhigh", "2", "2", "small", "low"]
 
 #print(predecir(arbol, nuevo_dato))
+
+"""
+Esta función evalúa un árbol de decisión utilizando un conjunto de datos de prueba.
+Genera las predicciones del árbol y obtiene las clases reales de cada dato para
+posteriormente poder comparar el desempeño del modelo.
+"""
+
 """
 def evaluar_arbol(arbol, datos_prueba):
     predicciones = []
