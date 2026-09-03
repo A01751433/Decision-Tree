@@ -4,6 +4,7 @@ from collections import Counter
 import math
 import pandas as pd
 import pprint
+import random
 
 """
 - Para fines de que yo lo probara y puediera exportar esto sin necesidad de compartir un .csv
@@ -15,11 +16,27 @@ import pprint
 df = pd.read_csv("Data/car_data.csv")
 #df = pd.read_csv("Data/dataset_compra_coche.csv")
 titulo_columnas = df.columns.tolist()
-dataset = df.values.tolist()
+datos = df.values.tolist()
 #print(dataset)
 # Las columnas son Outlook, Temperature, Humidity, Wind, Play
 
+"""
+Función que divide el dataset en dos partes, por defecto divide 70/30 pero se puede cambiar le porcentaje de datos
+de entrenamiento con el segundo parámetro.
+La función regresa dos listas, la primera es la de entrenamiento y la segunda la de prueba.
+"""
+def dividir_datos(data, porcentaje_entrenamiento=0.7):
+    datos = data.copy()
+    random.shuffle(datos)
 
+    cantidad_entrenamiento = int(len(datos) * porcentaje_entrenamiento)
+
+    datos_entrenamiento = datos[:cantidad_entrenamiento]
+    datos_prueba = datos[cantidad_entrenamiento:]
+
+    return datos_entrenamiento, datos_prueba
+
+dataset, datos_prueba = dividir_datos(datos)
 
 # Primero voy a hacer una función que cuente la cantidad de valores diferentes en cada columna
 def valores(data):
