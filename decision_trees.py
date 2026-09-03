@@ -173,6 +173,7 @@ def entropia_columna(data, columna):
 
 # Esto calcula la entropia de la columna "Y" porque resulta que mi función de entropía no lo puede calcular (siempre devuelve 0).
 # Podría modificar esta función para que recibiera el parámetro de colna y entonces reemplazara la función de entropia()
+"""
 def entropia_general(values):
 
     resultados = list(values[len(values)- 1].values())
@@ -182,6 +183,23 @@ def entropia_general(values):
     entropia = ((resultados[0] / (resultados[0] + resultados[1])) * math.log((resultados[0] / (resultados[0] + resultados[1])), 2) +
                 (resultados[1] / (resultados[0] + resultados[1])) * math.log((resultados[1] / (resultados[0] + resultados[1])), 2))
     return entropia
+"""
+def entropia_general(values):
+
+    resultados = list(values[len(values) - 1].values())
+    total = sum(resultados)
+
+    entropy = 0
+
+    for cantidad in resultados:
+
+        if cantidad == 0:
+            continue
+
+        probabilidad = cantidad / total
+        entropy += probabilidad * math.log(probabilidad, 2)
+
+    return entropy
 
 #print(entropia_general(valores(dataset)))
 
@@ -357,37 +375,28 @@ def construir_arbol(data, descartadas):
         return clase_mayoritaria(data)
 
     # Crear el nodo
-    arbol = {
-        titulo_columnas[columna]: {}
-    }
+    arbol = {titulo_columnas[columna]: {}}
 
     # Obtener los valores posibles de esa columna
     valores_columna = valores(data)[columna].keys()
 
     # Crear una rama para cada valor
     for valor in valores_columna:
-
         subconjunto = dividir_dataset(data, columna, valor)
-
-        arbol[titulo_columnas[columna]][valor] = construir_arbol(
-            subconjunto,
-            descartadas + [columna]
-        )
+        arbol[titulo_columnas[columna]][valor] = construir_arbol(subconjunto, descartadas + [columna])
 
     return arbol
 
 pprint.pprint(construir_arbol(dataset, []))
 
+def predecir(arbol, dato):
+    while isinstance(arbol, dict):
+        columna = list(arbol.keys())[0]
+        indice = titulo_columnas.index(columna)
+        valor = dato[indice]
+        arbol = arbol[columna][valor]
+    return arbol
 
-a = {'Outlook':
-        {'Sunny':
-            {'Humidity': {'High': 'No', 'Normal': 'Yes'}},
-    'Overcast': 'Yes',
-    'Rain':
-            {'Humidity':
-                {'High':
-                    {'Wind':
-                        {'Weak': 'Yes', 'Strong': 'No'}},
-                'Normal':
-                    {'Wind':
-                        {'Weak': 'Yes', 'Strong': 'No'}}}}}}
+arbol = construir_arbol(dataset, [])
+nuevo_dato = ["Sunny", "Hot", "High", "Weak"]
+print(predecir(arbol, nuevo_dato))
