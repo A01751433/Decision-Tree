@@ -11,12 +11,13 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_s
 import matplotlib.pyplot as plt
 
 """
-- A lo largo del código hay múltiples funciones que están totalmente comentadas, esto es porque primero hice mi implementación
+- Hay un documento en la misma carpeta que este que se llama funcinoes_viejas.txt, esto es porque primero hice mi implementación
   simple para el dataset de jugar tennis de la actividad 7 (Tree_data.csv) para entender el funcionamiento y luego tuve
-  que cambiar la mayoría de las funciones para que fueran aplicables *cualquier* dataset.
+  que cambiar la mayoría de las funciones para que fueran aplicables a *cualquier* dataset.
 - Las restricciones actuales de mi código es que puede trabajar con cualquier dataset en donde todas las columnas
   sean categóricas y la columna target (las "Y") sea la última columna del dataset. No hay restricción en el número de
   columnas ni en el número de valores únicos por columna/categoría.
+- La línea 44 se puede cambiar para definir una semilla para los resultados pseudoaleatorios
 """
 
 """
@@ -39,6 +40,8 @@ Función que divide el dataset en dos partes, por defecto divide 70/30 pero se p
 de entrenamiento con el segundo parámetro.
 La función regresa dos listas, la primera es la de entrenamiento y la segunda la de prueba.
 """
+# Elmiminar o comentar esta línea para que los resultados sean pseudoaleatorios
+random.seed(42)
 def dividir_datos(data, porcentaje_entrenamiento=0.7):
     datos = data.copy()
     random.shuffle(datos)
@@ -50,7 +53,7 @@ def dividir_datos(data, porcentaje_entrenamiento=0.7):
 
     return datos_entrenamiento, datos_prueba
 
-dataset, datos_prueba = dividir_datos(datos)
+datos_entrenamiento, datos_prueba = dividir_datos(datos)
 
 # Primero voy a hacer una función que cuente la cantidad de valores diferentes en cada columna
 def valores(data):
@@ -81,26 +84,12 @@ se realizan por columna y no con múltiples columnas.
 # Hasta donde puedo discernir, el órden de los valores (si va primero el Yes o el No) no afecta ninguna operación
 # creo que todas las operaciones se hacen igual con ambos valores (o todos los valores si es que hay más de 2)
 # Esto de y_keys se usa para poder tener valores default de 0 para poder hacer las operaciones luego
+"""
 y_keys = {}
 values = valores(dataset)
 for i in values[len(dataset[0]) - 1].keys():
     y_keys.setdefault(i, 0)
-
-"""def contar_play(dataset, columna):
-    conteo = {}
-
-    for fila in dataset:
-        valor = fila[columna]
-        # Esta líneasignifica que la función no funciona si una columna no tiene nombre
-        play = fila[len(titulo_columnas) - 1]
-
-        if valor not in conteo:
-            conteo[valor] = Counter(y_keys)
-
-        conteo[valor][play] += 1
-
-    return conteo
-    """
+"""
 
 # Sirve para contar cuántas veces aparece cada valor de una columna en combinación con cada clase de la variable objetivo
 def contar_play(data, columna):
@@ -127,20 +116,6 @@ Esta función calcula la entropía de una categoría específica a partir de los
 de las clases de la variable objetivo. Recibe el diccionario generado por contar_play
 y el índice de la categoría cuya entropía se desea calcular.
 """
-"""
-def entropia(conteo, categoria):
-
-    llave = list(conteo.keys())[categoria]
-    no = conteo[llave]["No"]
-    yes = conteo[llave]["Yes"]
-    # Si yes o no son iguales a 0, entonces el resultado es 0
-    if (yes == 0) or (no == 0):
-        return 0
-
-    entropy = (yes/(yes + no)) * math.log(yes/(yes + no), 2) + (no/(yes + no)) * math.log(no/(yes + no), 2)
-
-    return entropy
-"""
 def entropia(conteo, categoria):
     llave = list(conteo.keys())[categoria]
     cantidades = conteo[llave].values()
@@ -165,21 +140,6 @@ def entropia(conteo, categoria):
 """
 Calcula la entropía de una columna entera.
 """
-
-"""
-def entropia_columna(values, columna):
-    entropia_total = 0
-    cantidad_datos = len(dataset)
-    i = 0
-    while i < len(values[columna]):
-        llave = list(values[columna].keys())[i]
-        entropy = (entropia(contar_play(dataset, columna), i) * (-1))
-        entropia_total += entropy * (values[columna][llave] / cantidad_datos)
-
-        i += 1
-
-    return entropia_total
-"""
 def entropia_columna(data, columna):
 
     values = valores(data)
@@ -200,17 +160,6 @@ def entropia_columna(data, columna):
 
 # Esto calcula la entropia de la columna "Y" porque resulta que mi función de entropía no lo puede calcular (siempre devuelve 0).
 # Podría modificar esta función para que recibiera el parámetro de colna y entonces reemplazara la función de entropia()
-"""
-def entropia_general(values):
-
-    resultados = list(values[len(values)- 1].values())
-    entropia = 0
-    if resultados[0] == 0 or resultados[1] == 0:
-        return entropia
-    entropia = ((resultados[0] / (resultados[0] + resultados[1])) * math.log((resultados[0] / (resultados[0] + resultados[1])), 2) +
-                (resultados[1] / (resultados[0] + resultados[1])) * math.log((resultados[1] / (resultados[0] + resultados[1])), 2))
-    return entropia
-"""
 def entropia_general(values):
 
     resultados = list(values[len(values) - 1].values())
@@ -251,25 +200,6 @@ def information_gain(data, columna):
 """
 Esta función calcula el Information Gain de las columnas que aún no han sido
 descartadas y selecciona la columna que obtiene el mayor valor de Information Gain.
-"""
-"""
-def info_gain_list(data, descartadas):
-
-    big_gains = 0
-    columna_ganadora = 0
-    i = 0
-    while i < len(titulo_columnas) - 1:
-
-        if i in descartadas:
-            i += 1
-        else:
-            gain_columna = information_gain(data, i)
-            if gain_columna > big_gains:
-                big_gains = gain_columna
-                columna_ganadora = i
-            i += 1
-
-    return columna_ganadora
 """
 def info_gain_list(data, descartadas):
 
@@ -313,22 +243,7 @@ def dividir_dataset(data, columna, valor):
 Esta función determina si todas las filas de un conjunto pertenecen a la misma
 clase. Regresa True si el conjunto es puro y False si contiene más de una clase.
 """
-"""
-def es_puro(conjunto):
-    yes = 0
-    no = 0
 
-    for fila in conjunto:
-        if fila[-1] == "Yes":
-            yes += 1
-        else:
-            no += 1
-
-    if yes == 0 or no == 0:
-        return True
-    else:
-        return False
-"""
 
 def es_puro(conjunto):
 
@@ -346,22 +261,7 @@ def es_puro(conjunto):
 Esta función determina cuál es la clase que aparece con mayor frecuencia
 en un conjunto de datos y regresa dicha clase.
 """
-"""
-def clase_mayoritaria(conjunto):
-    yes = 0
-    no = 0
 
-    for fila in conjunto:
-        if fila[-1] == "Yes":
-            yes += 1
-        else:
-            no += 1
-
-    if yes >= no:
-        return "Yes"
-    else:
-        return "No"
-"""
 
 def clase_mayoritaria(conjunto):
 
@@ -379,38 +279,6 @@ conjunto de datos. Selecciona la columna con mayor Information Gain, divide
 el dataset según sus valores y continúa construyendo las ramas hasta llegar
 a una hoja o hasta que no queden columnas disponibles.
 """
-
-"""
-def construir_arbol(data, descartadas):
-
-    # Si todos pertenecen a la misma clase, hemos llegado a una hoja
-    if es_puro(data):
-        return clase_mayoritaria(data)
-
-    # Buscar la mejor columna disponible
-    columna = info_gain_list(data, descartadas)
-
-    # Crear el nodo
-    arbol = {
-        titulo_columnas[columna]: {}
-    }
-
-    # Obtener los valores posibles de esa columna
-    valores_columna = valores(data)[columna].keys()
-
-    # Crear una rama para cada valor
-    for valor in valores_columna:
-
-        subconjunto = dividir_dataset(data, columna, valor)
-
-        arbol[titulo_columnas[columna]][valor] = construir_arbol(
-            subconjunto,
-            descartadas + [columna]
-        )
-
-    return arbol
-"""
-
 def construir_arbol(data, descartadas):
 
     # Si todos pertenecen a la misma clase, hemos llegado a una hoja
@@ -438,27 +306,15 @@ def construir_arbol(data, descartadas):
 
     return arbol
 
+#pprint.pprint(construir_arbol(dataset, []))
 
 """
 Esta función utiliza un árbol de decisión para determinar la clase de un dato.
 Recorre el árbol según los valores del dato y regresa la clase correspondiente.
 Si el valor no existe en el árbol, utiliza la clase mayoritaria del conjunto de datos.
 """
-#pprint.pprint(construir_arbol(dataset, []))
-"""
-def predecir(arbol, dato):
-    while isinstance(arbol, dict):
-        columna = list(arbol.keys())[0]
-        indice = titulo_columnas.index(columna)
-        valor = dato[indice]
 
-        print("Columna:", columna)
-        print("Valor:", valor)
-        print("Ramas disponibles:", arbol[columna].keys())
 
-        arbol = arbol[columna][valor]
-    return arbol
-"""
 def predecir(arbol, dato, data):
 
     while isinstance(arbol, dict):
@@ -487,32 +343,15 @@ Genera las predicciones del árbol y obtiene las clases reales de cada dato para
 posteriormente poder comparar el desempeño del modelo.
 """
 
-"""
-def evaluar_arbol(arbol, datos_prueba):
-    predicciones = []
-    reales = []
 
-    for fila in datos_prueba:
-        datos = fila[:-1]      # Todas las columnas excepto la clase
-        clase_real = fila[-1]  # Última columna
 
-        prediccion = predecir(arbol, datos)
-
-        predicciones.append(prediccion)
-        reales.append(clase_real)
-
-        # Las devuelve en 2 listas diferentes, una con las predicciones y otra con los valores reales
-        # literal las copio y pego para los dos lados de la matriz de confusión
-    return predicciones, reales
-"""
-
-def evaluar_arbol(arbol, datos_prueba):
+def evaluar_arbol(arbol, datos_prueba, datos_entrenamiento):
 
     predicciones = []
     reales = []
 
     for datos in datos_prueba:
-        prediccion = predecir(arbol, datos, dataset)
+        prediccion = predecir(arbol, datos, datos_entrenamiento)
         predicciones.append(prediccion)
         reales.append(datos[-1])
 
@@ -539,15 +378,62 @@ def matriz_confusion(reales, predicciones):
 #matriz = matriz_confusion(reales, predicciones)
 
 
-arbol = construir_arbol(dataset, [])
+arbol = construir_arbol(datos_entrenamiento, [])
 
-predicciones, reales = evaluar_arbol(arbol, datos_prueba)
+# Evaluar el árbol con los datos de entrenamiento
+predicciones_entrenamiento, reales_entrenamiento = evaluar_arbol(
+    arbol,
+    datos_entrenamiento,
+    datos_entrenamiento
+)
+
+# Evaluar el árbol con los datos de prueba
+predicciones, reales = evaluar_arbol(
+    arbol,
+    datos_prueba,
+    datos_entrenamiento
+)
 
 #matriz = matriz_confusion(reales, predicciones)
 
 #pprint.pprint(matriz)
 
 """ De aquí en adelante son puras cosas para la matriz y datos del performance """
+
+"""
+Pedí a una IA que hiciera esta función para ayudar con la legibilidad de los resultados.
+Esta función no es necesaria para el funcionamiento de nada más en el código y borrarla no afectaría
+el desemepeño de ninguna otra parte de mi código (sin mencionar que como no hay un límite de tamaño mínimo de hoja,
+el árbol sigue siendo bastante difícil de leer).
+"""
+def imprimir_arbol(arbol, prefijo=""):
+    if not isinstance(arbol, dict):
+        print(prefijo + "→ " + str(arbol))
+        return
+
+    columna = list(arbol.keys())[0]
+    print(prefijo + columna)
+
+    ramas = list(arbol[columna].items())
+
+    for i, (valor, subarbol) in enumerate(ramas):
+        ultima_rama = i == len(ramas) - 1
+
+        if ultima_rama:
+            conector = "└── "
+            nuevo_prefijo = prefijo + "    "
+        else:
+            conector = "├── "
+            nuevo_prefijo = prefijo + "│   "
+
+        if isinstance(subarbol, dict):
+            print(prefijo + conector + str(valor))
+            imprimir_arbol(subarbol, nuevo_prefijo)
+        else:
+            print(prefijo + conector + str(valor) + " → " + str(subarbol))
+
+print("\nÁrbol de decisión:")
+imprimir_arbol(arbol)
 
 # Obtener las clases presentes
 clases = sorted(set(reales) | set(predicciones))
@@ -566,9 +452,24 @@ plt.title("Matriz de confusión")
 plt.show()
 
 # Accuracy
-accuracy = accuracy_score(reales, predicciones)
+# Accuracy de entrenamiento
+accuracy_entrenamiento = accuracy_score(
+    reales_entrenamiento,
+    predicciones_entrenamiento
+)
 
-print("Accuracy:", accuracy)
+# Accuracy de prueba
+accuracy_prueba = accuracy_score(
+    reales,
+    predicciones
+)
+
+# Diferencia entre ambas
+diferencia_accuracy = accuracy_entrenamiento - accuracy_prueba
+
+print(f"Accuracy de entrenamiento: {accuracy_entrenamiento:.2%}")
+print(f"Accuracy de prueba:        {accuracy_prueba:.2%}")
+print(f"Diferencia:                {diferencia_accuracy:.2%}")
 
 # Reporte de clasificación
 print("\nReporte de clasificación:")
