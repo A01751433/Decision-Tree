@@ -29,7 +29,7 @@ def mover_target_al_final(df, posicion_target):
 
     target = columnas.pop(posicion_target)
     columnas.append(target)
-
+z
     return df[columnas]
 
 
