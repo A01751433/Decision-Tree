@@ -25,6 +25,10 @@ from sklearn.metrics import (
     classification_report
 )
 import matplotlib.pyplot as plt
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import RandomizedSearchCV
+from scipy.stats import randint
+from sklearn.inspection import permutation_importance
 
 
 """
@@ -54,12 +58,19 @@ X = df.iloc[:, :-1]
 y = df.iloc[:, -1]
 
 # Es necesario indicar cuáles columnas son numéricas y cuáles categorícias para las transformaciones del pipeline
-
+#original
+"""
 columnas_numericas = [
     "Pclass",
     "Age",
     "SibSp",
     "Parch",
+    "Fare"
+]
+"""
+columnas_numericas = [
+    "Pclass",
+    "Age",
     "Fare"
 ]
 
@@ -117,15 +128,257 @@ X_entrenamiento = preprocesamiento.fit_transform(X_entrenamiento)
 X_validacion = preprocesamiento.transform(X_validacion)
 X_prueba = preprocesamiento.transform(X_prueba)
 
+# ==========================================
+# RANDOMIZED SEARCH - RANDOM FOREST
+# ==========================================
 
+modelo_rf = RandomForestClassifier(
+    random_state=42
+)
+
+# Espacio de búsqueda
+parametros = {
+    "n_estimators": randint(100, 501),
+    "max_depth": [3, 5, 7, 10, 12, 15, 20, None],
+    "min_samples_split": randint(2, 21),
+    "min_samples_leaf": randint(1, 21),
+    "max_features": ["sqrt", "log2", None]
+}
+
+# Búsqueda aleatoria
+random_search = RandomizedSearchCV(
+    estimator=modelo_rf,
+    param_distributions=parametros,
+    n_iter=50,
+    scoring="accuracy",
+    cv=5,
+    random_state=42,
+    n_jobs=-1,
+    verbose=1
+)
+
+random_search.fit(X_entrenamiento, y_entrenamiento)
+
+# ==========================================
+# MEJORES RESULTADOS
+# ==========================================
+
+print("==========================================")
+print("MEJORES HIPERPARÁMETROS")
+print("==========================================")
+
+print(random_search.best_params_)
+
+print("\n==========================================")
+print("MEJOR ACCURACY DE VALIDACIÓN CRUZADA")
+print("==========================================")
+
+print(random_search.best_score_)
+
+mejor_modelo = random_search.best_estimator_
+
+# ==========================================
+# IMPORTANCIA DE LAS VARIABLES
+# ==========================================
+
+# Obtener los nombres de las variables después del preprocesamiento
+nombres_variables = preprocesamiento.get_feature_names_out()
+
+# Importancia calculada por el Random Forest
+importancias = pd.DataFrame({
+    "variable": nombres_variables,
+    "importancia": mejor_modelo.feature_importances_
+})
+
+importancias = importancias.sort_values(
+    "importancia",
+    ascending=False
+)
+
+print("==========================================")
+print("IMPORTANCIA DE LAS VARIABLES")
+print("==========================================")
+
+print(importancias.to_string(index=False))
+
+# Predicciones
+predicciones_entrenamiento = mejor_modelo.predict(X_entrenamiento)
+predicciones_validacion = mejor_modelo.predict(X_validacion)
+predicciones_prueba = mejor_modelo.predict(X_prueba)
+
+# Accuracy
+accuracy_entrenamiento = accuracy_score(
+    y_entrenamiento,
+    predicciones_entrenamiento
+)
+
+accuracy_validacion = accuracy_score(
+    y_validacion,
+    predicciones_validacion
+)
+
+accuracy_prueba = accuracy_score(
+    y_prueba,
+    predicciones_prueba
+)
+
+print("==========================================")
+print("RESULTADOS DEL MEJOR RANDOM FOREST")
+print("==========================================")
+
+print(f"Accuracy entrenamiento: {accuracy_entrenamiento:.4f}")
+print(f"Accuracy validación:    {accuracy_validacion:.4f}")
+print(f"Accuracy prueba:        {accuracy_prueba:.4f}")
+
+print(f"Diferencia Train-Validation: "
+      f"{accuracy_entrenamiento - accuracy_validacion:.4f}")
+
+print(f"Diferencia Train-Test: "
+      f"{accuracy_entrenamiento - accuracy_prueba:.4f}")
+
+
+# Iteración 2: limitar cantidad mínima de muestras por hoja
+# ==========================================
+# AJUSTE DE min_samples_leaf
+# ==========================================
+
+MINIMAS_HOJA = [1, 2, 3, 4, 5, 6, 8, 10]
+
+resultados = []
+
+
+for min_hoja in MINIMAS_HOJA:
+
+    modelo = RandomForestClassifier(
+        n_estimators=100,
+        max_depth=None,
+        min_samples_split=2,
+        min_samples_leaf=min_hoja,
+        max_features="sqrt",
+        random_state=None
+    )
+
+    modelo.fit(X_entrenamiento, y_entrenamiento)
+
+    # Predicciones
+    predicciones_entrenamiento = modelo.predict(X_entrenamiento)
+    predicciones_validacion = modelo.predict(X_validacion)
+    predicciones_prueba = modelo.predict(X_prueba)
+
+    # Accuracy
+    accuracy_entrenamiento = accuracy_score(
+        y_entrenamiento,
+        predicciones_entrenamiento
+    )
+
+    accuracy_validacion = accuracy_score(
+        y_validacion,
+        predicciones_validacion
+    )
+
+    accuracy_prueba = accuracy_score(
+        y_prueba,
+        predicciones_prueba
+    )
+
+    # Brechas
+    diferencia_train_validation = (
+        accuracy_entrenamiento - accuracy_validacion
+    )
+
+    diferencia_train_test = (
+        accuracy_entrenamiento - accuracy_prueba
+    )
+
+    resultados.append({
+        "min_samples_leaf": min_hoja,
+        "accuracy_train": accuracy_entrenamiento,
+        "accuracy_validation": accuracy_validacion,
+        "accuracy_test": accuracy_prueba,
+        "diferencia_train_validation": diferencia_train_validation,
+        "diferencia_train_test": diferencia_train_test
+    })
+
+
+resultados_df = pd.DataFrame(resultados)
+
+print("==========================================")
+print("RESULTADOS DEL AJUSTE DE min_samples_leaf")
+print("==========================================")
+
+print(resultados_df.to_string(index=False))
+
+
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(10, 6))
+
+plt.plot(
+    resultados_df["min_samples_leaf"],
+    resultados_df["accuracy_train"],
+    marker="o",
+    label="Train"
+)
+
+plt.plot(
+    resultados_df["min_samples_leaf"],
+    resultados_df["accuracy_validation"],
+    marker="o",
+    label="Validation"
+)
+
+plt.plot(
+    resultados_df["min_samples_leaf"],
+    resultados_df["accuracy_test"],
+    marker="o",
+    label="Test"
+)
+
+plt.xlabel("min_samples_leaf")
+plt.ylabel("Accuracy")
+plt.title("Desempeño del Random Forest según min_samples_leaf")
+plt.legend()
+plt.grid(True)
+
+plt.show()
+
+
+plt.figure(figsize=(10, 6))
+
+plt.plot(
+    resultados_df["min_samples_leaf"],
+    resultados_df["diferencia_train_validation"],
+    marker="o",
+    label="Train - Validation"
+)
+
+plt.plot(
+    resultados_df["min_samples_leaf"],
+    resultados_df["diferencia_train_test"],
+    marker="o",
+    label="Train - Test"
+)
+
+plt.axhline(0, linestyle="--")
+
+plt.xlabel("min_samples_leaf")
+plt.ylabel("Diferencia de Accuracy")
+plt.title("Brecha de generalización según min_samples_leaf")
+plt.legend()
+plt.grid(True)
+
+plt.show()
+
+
+"""
 # ==========================================
 # CONFIGURACIÓN DEL RANDOM FOREST
 # ==========================================
 
 NUMERO_ARBOLES = 100
-PROFUNDIDAD_MAXIMA = 5
+PROFUNDIDAD_MAXIMA = 10
 MINIMO_MUESTRAS_DIVISION = 2
-MINIMO_MUESTRAS_HOJA = 7
+MINIMO_MUESTRAS_HOJA = 1
 NUMERO_MAXIMO_CARACTERISTICAS = "sqrt"
 SEMILLA = 42
 
@@ -314,8 +567,7 @@ for i, valor in enumerate(accuracy):
     )
 
 plt.show()
-
-
+"""
 
 
 """
